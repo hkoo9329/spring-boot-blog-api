@@ -27,19 +27,32 @@ public class RestWebApplication {
     @Configuration
     @EnableGlobalMethodSecurity(prePostEnabled = true)
     @EnableWebSecurity
-    static class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+    static class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+        @Bean
+        InMemoryUserDetailsManager userDetailsManager() {
+            User.UserBuilder commonUser = User.withUsername("commonUser");
+            User.UserBuilder havi = User.withUsername("havi");
+
+            List<UserDetails> userDetailsList = new ArrayList<>();
+            userDetailsList.add(commonUser.password("{noop}common").roles("USER").build());
+            userDetailsList.add(havi.password("{noop}test").roles("USER", "ADMIN").build());
+
+            return new InMemoryUserDetailsManager(userDetailsList);
+        }
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             CorsConfiguration configuration = new CorsConfiguration();
-            configuration.addAllowedOrigin(CorsConfiguration.ALL);
-            configuration.addAllowedMethod(CorsConfiguration.ALL);
-            configuration.addAllowedHeader(CorsConfiguration.ALL);
+            configuration.addAllowedOrigin("*");
+            configuration.addAllowedMethod("*");
+            configuration.addAllowedHeader("*");
             UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
             source.registerCorsConfiguration("/**", configuration);
 
             http.httpBasic()
                     .and().authorizeRequests()
+                    //.antMatchers(HttpMethod.POST, "/Boards/**").hasRole("ADMIN")
                     .anyRequest().permitAll()
                     .and().cors().configurationSource(source)
                     .and().csrf().disable();
